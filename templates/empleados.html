@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Gestión de Empleados</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
-    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestión de Empleados</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
+
 <body style="background-color: #F7F8FC;">
 <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #21BDED;">
   <div class="container-fluid">
@@ -29,74 +29,6 @@
 <div class="container my-5">
   <div class="bg-white rounded p-4 shadow-sm">
     <h2 class="text-center fw-bold mb-4" style="color: #21BDED;">Gestión de Empleados</h2>
-    <form id="form-empleado">
-      <div class="row mb-3">
-        <div class="col-md-3 mb-2">
-          <input type="text" name="nombres" class="form-control" placeholder="Nombres" required />
-        </div>
-        <div class="col-md-3 mb-2">
-          <input type="text" name="apellidos" class="form-control" placeholder="Apellidos" required />
-        </div>
-        <div class="col-md-3 mb-2">
-          <input type="text" name="rut" class="form-control" placeholder="RUT" required />
-        </div>
-        <div class="col-md-3 mb-2">
-          <input type="date" name="fecha_nacimiento" class="form-control" required />
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col-md-4 mb-2">
-          <input type="text" name="direccion" class="form-control" placeholder="Dirección" required />
-        </div>
-        <div class="col-md-2 mb-2">
-          <select name="empresa_id" class="form-select" required>
-            <option value="" disabled selected>Selecciona Empresa</option>
-            {% for empresa in empresas %}
-            <option value="{{ empresa.id }}">{{ empresa.nombre }}</option>
-            {% endfor %}
-            <option value="1">Mi empresa</option>
-          </select>
-        </div>
-        <div class="col-md-2 mb-2">
-          <select name="afp_id" class="form-select" required>
-            <option value="" disabled selected>Selecciona AFP</option>
-            {% for afp in afps %}
-            <option value="{{ afp.id }}">{{ afp.nombre }}</option>
-            {% endfor %}
-            <option value="1">AFP Capital</option>
-          </select>
-        </div>
-        <div class="col-md-2 mb-2">
-          <select name="salud_id" class="form-select" required>
-            <option value="" disabled selected>Selecciona Salud</option>
-            {% for salud in saluds %}
-            <option value="{{ salud.id }}">{{ salud.nombre }}</option>
-            {% endfor %}
-            <option value="1">FONASA</option>
-          </select>
-        </div>
-        <div class="col-md-2 mb-2">
-          <select name="afc_id" class="form-select" required>
-            <option value="" disabled selected>Tipo Contrato</option>
-           
-            <option value="1">INDEFINIDO</option>
-            <option value="2">PLAZO FIJO</option>
-
-          </select>
-        </div>
-        <div class="col-md-3 mb-2 mt-2">
-          <input type="date" name="fecha_ingreso" class="form-control" required />
-        </div>
-        <div class="col-md-3 mb-2 mt-2">
-          <input type="number" name="sueldo_base" class="form-control" placeholder="Sueldo Base" required />
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col-12 text-end">
-          <button type="button" onclick="agregarEmpleado()" class="btn btn-info text-white">Agregar Empleado</button>
-        </div>
-      </div>
-    </form>
 
     <table class="table table-striped mt-4">
       <thead>
@@ -109,6 +41,7 @@
           <th>AFP</th>
           <th>Salud</th>
           <th>AFC</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody>
@@ -122,13 +55,16 @@
           <td>{{ empleado.afp_nombre or '' }}</td>
           <td>{{ empleado.salud_nombre or '' }}</td>
           <td>{{ empleado.afc_nombre or '' }}</td>
-	  <td>
-	    <button
-		class="btn btn-outline-success btn-sm"
-		onclick="generarPDF({{ empleado.id }}, '{{ empleado.nombres }} {{ empleado.apellidos }}')"
-		Generar PDF
-	    </button>
-	  </tr>
+          <td>
+            <button
+              class="btn btn-outline-success btn-sm"
+              data-bs-toggle="modal"
+              data-bs-target="#modalLiquidacion"
+              data-id="{{ empleado.id }}"
+              data-nombre="{{ empleado.nombres }} {{ empleado.apellidos }}">
+              Generar Liquidación
+            </button>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -136,43 +72,95 @@
   </div>
 </div>
 
-    <script src="{{ url_for('assets', path='js/index.js') }}"></script>
+<!-- Modal Bootstrap -->
+<div class="modal fade" id="modalLiquidacion" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formLiquidacion" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generar Liquidación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label">Empleado</label>
+          <input type="text" id="empNombre" class="form-control" disabled>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Días trabajados (1 a 30)</label>
+          <input type="number" id="dias" class="form-control" min="1" max="30" value="30" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Horas extras (≥ 0)</label>
+          <input type="number" id="horas" class="form-control" min="0" step="0.5" value="0" required>
+        </div>
+        <div id="alerta" class="d-none alert mt-2"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-primary">Generar PDF</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let empleadoSeleccionado = null;
+
+const modalEl = document.getElementById('modalLiquidacion');
+modalEl.addEventListener('show.bs.modal', (ev) => {
+  const btn = ev.relatedTarget;
+  empleadoSeleccionado = {
+    id: btn.getAttribute('data-id'),
+    nombre: btn.getAttribute('data-nombre')
+  };
+  document.getElementById('empNombre').value = empleadoSeleccionado.nombre;
+  document.getElementById('dias').value = 30;
+  document.getElementById('horas').value = 0;
+  const alerta = document.getElementById('alerta');
+  alerta.classList.add('d-none');
+  alerta.classList.remove('alert-danger','alert-success');
+  alerta.innerText = '';
+});
+
+document.getElementById('formLiquidacion').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const dias = parseInt(document.getElementById('dias').value, 10);
+  const horas = parseFloat(document.getElementById('horas').value);
+  const alerta = document.getElementById('alerta');
+
+  if (isNaN(dias) || dias < 1 || dias > 30 || isNaN(horas) || horas < 0) {
+    alerta.classList.remove('d-none');
+    alerta.classList.add('alert','alert-danger');
+    alerta.innerText = 'Revisa los valores: días 1..30 y horas ≥ 0';
+    return;
+  }
+
+ try {
+    const url = `http://127.0.0.1:8000/liquidacion/${empleadoSeleccionado.id}/pdf`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ dias_trabajados: dias, horas_extras: horas })
+    });
+
+    if (!resp.ok) throw new Error('Error generando PDF');
+
+    const blob = await resp.blob();
+    const link = URL.createObjectURL(blob);
+    window.open(link, '_blank');
+
+    alerta.classList.remove('d-none');
+    alerta.classList.remove('alert-danger');
+    alerta.classList.add('alert','alert-success');
+    alerta.innerText = 'PDF generado correctamente';
+  } catch (err) {
+    alerta.classList.remove('d-none');
+    alerta.classList.remove('alert-success');
+    alerta.classList.add('alert','alert-danger');
+    alerta.innerText = 'No se pudo generar el PDF';
+  }
+});
+</script>
+
 </body>
-    <script>
-	async function generarPDF(empleadoId, nombreCompleto) {
-  	try {
-    	  const response = await fetch(`http://127.0.0.1:8000/liquidacion/${empleadoId}/pdf`, {
-            method: "POST"
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Error al generar PDF:", errorText);
-            alert("Error al generar la liquidación del empleado.");
-            return;
-          }
-
-          // Recibir el archivo PDF
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-
-          // Descargar automáticamente el archivo
-          const link = document.createElement("a");
-          link.href = url;
-    	  link.download = `liquidacion_${nombreCompleto.replace(/ /g, "_")}.pdf`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          // Liberar memoria
-          window.URL.revokeObjectURL(url);
-
-        } catch (error) {
-          console.error("Error de conexión:", error);
-          alert("No se pudo conectar con el servidor FastAPI.");
-     }
-   }
- </script>
-
 </html>
